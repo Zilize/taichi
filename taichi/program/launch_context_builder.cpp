@@ -289,25 +289,25 @@ void LaunchContextBuilder::set_arg_matrix(int arg_id, const Matrix &matrix) {
     switch (type_size) {
       case 1:
         set_struct_arg_impl(
-            {arg_id, i},
+            {arg_id, (int32)i},
             taichi_union_cast_with_different_sizes<int8>(
                 reinterpret_cast<uint8_t*>(matrix.data())[i]));
         break;
       case 2:
         set_struct_arg_impl(
-            {arg_id, i},
+            {arg_id, (int32)i},
             taichi_union_cast_with_different_sizes<int16>(
                 reinterpret_cast<uint16_t*>(matrix.data())[i]));
         break;
       case 4:
         set_struct_arg_impl(
-            {arg_id, i},
+            {arg_id, (int32)i},
             taichi_union_cast_with_different_sizes<int32>(
                 reinterpret_cast<uint32_t*>(matrix.data())[i]));
         break;
       case 8:
         set_struct_arg_impl(
-            {arg_id, i},
+            {arg_id, (int32)i},
             taichi_union_cast_with_different_sizes<int64>(
                 reinterpret_cast<uint64_t*>(matrix.data())[i]));
         break;
