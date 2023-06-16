@@ -12,6 +12,7 @@
 #include "pybind11/pybind11.h"
 #include "pybind11/eigen.h"
 #include "pybind11/numpy.h"
+#include "fp16.h"
 
 #include "taichi/ir/expression_ops.h"
 #include "taichi/ir/frontend_ir.h"
@@ -663,7 +664,26 @@ void export_lang(py::module &m) {
                  auto type_id = arg.dtype()->as<PrimitiveType>()->type;
                  switch (type_id) {
                    case PrimitiveTypeID::f16: {
-                     TI_ERROR("Unsupported scalar type {}", type_id);
+                     auto arr = pyarg.cast<py::array_t<float32>>();
+                     py::buffer_info buffer_info = arr.request();
+                     auto length = buffer_info.size;
+                     auto ptr = reinterpret_cast<intptr_t>(buffer_info.ptr);
+
+                     std::unique_ptr<char[]> data(new char[128]);
+                     for (uint32_t i = 0; i < length; i++) {
+                       uint16 half = fp16_ieee_from_fp32_value(
+                           reinterpret_cast<float32*>(ptr)[i]);
+                       reinterpret_cast<uint16*>(data.get())[i] = half;
+                     }
+                     matrix_buffers.emplace_back(std::move(data));
+
+                     matrices.emplace_back(
+                         Matrix(length, arg.dtype(),
+                                reinterpret_cast<intptr_t>(
+                                    matrix_buffers.back().get())));
+                     args.insert({arg_name,
+                                  aot::IValue::create(matrices.back())});
+                     break;
                    }
 #define PER_C_TYPE(type, ctype)                                           \
   case PrimitiveTypeID::type: {                                           \
